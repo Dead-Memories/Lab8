@@ -1,23 +1,18 @@
-/**
- * Класс организаций, содержащий конструкторы, по кототорым создаются объекты класса, хранящиеся в коллекции
- */
+package Organizations;
 
 public class Organization implements Comparable <Organization>{
-    private long id; //Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
+    private long id; //Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, значение этого поля должно генерироваться автоматически
     private String name; //Поле не может быть null, Строка не может быть пустой
-    private Coordinates Coordinates; //Поле не может быть null
+    private Organizations.Coordinates Coordinates; //Поле не может быть null
     private String creationDate; //Поле не может быть null, Значение этого поля должно генерироваться автоматически
     private float annualTurnover; //Значение поля должно быть больше 0
     private Integer employeesCount; //Поле не может быть null, Значение поля должно быть больше 0
     private OrganizationType type = null; //Поле может быть null
     private Address officialAddress = null; //Поле может быть null
+    private int USERID;
 
-    /**
-     * Конструктор организации
-     */
-
-    public Organization(String name, Coordinates coordinates, String creationDate,
-                        float annualTurnover, Integer employeesCount, OrganizationType type, Address officialAddress){
+    public Organization(long id, String name, Coordinates coordinates, String creationDate,
+                        float annualTurnover, Integer employeesCount, OrganizationType type, Address officialAddress, int USERID){
         this.name = name;
         this.Coordinates = coordinates;
         this.creationDate = creationDate;
@@ -25,12 +20,10 @@ public class Organization implements Comparable <Organization>{
         this.employeesCount = employeesCount;
         this.type = type;
         this.officialAddress = officialAddress;
-        this.id = this.hashCode();
+        this.id = id;
+        this.USERID = USERID;
     }
 
-    /**
-     * Метод, предназначенный для замены организации с заданным id. Реализуется через update_id
-     */
 
     public void replace(String name, Coordinates coordinates, String creationDate,
                         float annualTurnover, Integer employeesCount, OrganizationType type, Address officialAddress){
@@ -74,6 +67,8 @@ public class Organization implements Comparable <Organization>{
         return employeesCount;
     }
 
+    public int getUSERID() {return USERID;}
+
     public String getType() {
         if(type != null){ return type.toString();}else{return "Не указан";}
     }
@@ -94,6 +89,7 @@ public class Organization implements Comparable <Organization>{
                 "Количество сотрудников: " + this.getEmployeesCount()+"\n"+
                 "Тип: " + this.getType()+"\n"+
                 "Официальный адрес: " + this.getOfficialAddress()+'\n'+
+                "Создана пользователем с ID = " + this.getUSERID()+'\n'+
                 "\n"+"____________________________________"+"\n";
     }
 

@@ -1,21 +1,12 @@
-import java.io.Serializable;
+package Organizations;
 
-/**
- * Класс координат организации
- */
+import java.io.Serializable;
 
 public class Coordinates implements Serializable {
     private long x; //min -903
     private int y; // max 551
     public Coordinates(long x, int y){
         this.x = x;
-        this.y = y;
-    }
-
-    public void setX(long x){
-        this.x = x;
-    }
-    public void setY(int y){
         this.y = y;
     }
 

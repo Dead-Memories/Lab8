@@ -1,11 +1,10 @@
+package ClientSide;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * Класс, отвечающий за ввод команд пользователем и диалог м/д программой и пользователем
- */
 
 public class ClientCommandReader {
 
@@ -18,9 +17,6 @@ public class ClientCommandReader {
         this.toServer = toServer;
     }
 
-    /**
-     * Метод, взаимодействующий с консолью
-     */
 
     public void start_reading(HashSet<String> is_console, String Path) throws IOException, ClassNotFoundException {
         Boolean is_ok = true;
@@ -49,7 +45,6 @@ public class ClientCommandReader {
             String[] commandParts;
             while (!command.equals("exit")) {
                 commandParts = command.split(" ", 3);
-
                 switch (commandParts[0]) {
                     case "":
                         break;
@@ -117,7 +112,7 @@ public class ClientCommandReader {
                         hub.print_field_ascending_official_address();
                         break;
                     default:
-                        System.out.println('"' + command + "\" не является командой. спользуйте help, чтобы узнать список доступных команд.");
+                        System.out.println('"' + command + "\" не является командой. Используйте help, чтобы узнать список доступных команд.");
                         break;
                 }
                 System.out.print('>');
