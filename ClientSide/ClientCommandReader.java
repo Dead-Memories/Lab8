@@ -1,5 +1,6 @@
 package ClientSide;
 
+import javax.swing.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -19,6 +20,8 @@ public class ClientCommandReader {
 
 
     public void start_reading(HashSet<String> is_console, String Path) throws IOException, ClassNotFoundException {
+
+
         Boolean is_ok = true;
 
         ClientCommandHub hub = new ClientCommandHub(fromServer, toServer);

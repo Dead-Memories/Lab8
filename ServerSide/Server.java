@@ -8,23 +8,26 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import ServerSide.Worker;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
 import Organizations.*;
 
 public class Server {
 
-    public static final String DB_URL = "jdbc:postgresql://pg/studs";
+    public static final String DB_URL = "jdbc:postgresql://localhost/studs";
+//public static final String DB_URL = "jdbc:postgresql://pg/studs";
     public static String login;
     public static String password;
     public static void main(String[] args) {
 
-        final Logger logger = LogManager.getLogger();
+//        final Logger logger = LogManager.getLogger();
         System.out.println("Hello, введите логин для подключения к БД");
-        Scanner in = new Scanner(System.in);
-        login = in.nextLine();
-        System.out.println("Введите пароль для подключения к БД");
-        password = in.nextLine();
+//        Scanner in = new Scanner(System.in);
+//        login = in.nextLine();
+//        System.out.println("Введите пароль для подключения к БД");
+//        password = in.nextLine();
+        login = "postgres";
+        password = "password";
         TreeSet<Organization> empty_set = new TreeSet<Organization>();
         Set<Organization> organizations = Collections.synchronizedSet(empty_set);
 
@@ -42,24 +45,23 @@ public class Server {
             System.out.println("Ошибка SQL!");
         }
 
-        logger.info("Got collection with "+ organizations.size() + " elements");
-
-        logger.info("We are running server");
+//        logger.info("");
+//        logger.info("We are running server");
 
         try {
             try (ServerSocket ss = new ServerSocket(2605)) {
                 System.out.println("ServerSocket awaiting connections...");
-                ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(16);
                 while (true)
                 {
-                    Worker w = new Worker(ss.accept(), connection, logger, organizations);
-                    executor.execute(w);
+                    Worker w = new Worker(ss.accept(), connection, organizations);
+                    new Thread(w).start();
                 }
             }
         }
         catch (Exception e)
         {
-            logger.info("Connection were terminated");
+            e.printStackTrace();
+//            logger.info("Connection were terminated");
         }
     }
 

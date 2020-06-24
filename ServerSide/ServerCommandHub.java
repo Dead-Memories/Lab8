@@ -1,7 +1,6 @@
 package ServerSide;
 
 import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,22 +13,24 @@ import java.util.stream.Stream;
 import Organizations.*;
 import Communication.*;
 
+
 public class ServerCommandHub {
     ObjectOutputStream toClient;
     ObjectInputStream fromClient;
-    Logger logger;
+//    Logger logger;
     Connection connection;
     long userid;
+    String last_update;
 
     private HashMap<String, String> CommandHelpList = new HashMap<String, String>();
 
 
-    public ServerCommandHub(ObjectOutputStream toClient, ObjectInputStream fromClient, Logger logger, Connection connection, long userid) throws SQLException {
+    public ServerCommandHub(ObjectOutputStream toClient, ObjectInputStream fromClient, Connection connection, long userid) throws SQLException {
+        last_update = LocalDateTime.now().toString();
         this.toClient = toClient;
         this.fromClient = fromClient;
         this.connection = connection;
         this.userid = userid;
-        System.out.println("USERID5: " + userid);
         connection.setAutoCommit(false);
         CommandHelpList.put("help", "Команда help выведет справку по доступным командам.");
         CommandHelpList.put("info", "Команда info выведет информацию о коллекции.");
@@ -47,7 +48,7 @@ public class ServerCommandHub {
         CommandHelpList.put("print_descending", "Команда print_descending выведет элементы коллекции в порядке убывания.");
         CommandHelpList.put("print_field_ascending_official_address", "Команда print_field_ascending_official_address выведет значения поля officialAddress в порядке возрастания.");
 
-        this.logger = logger;
+//        this.logger = logger;
     }
 
     public void show(Set<Organization> collection) throws IOException {
@@ -55,13 +56,53 @@ public class ServerCommandHub {
         collection.forEach(o -> resp.addText(o.toString()));
 
         this.toClient.writeObject(resp);
-        logger.info("Sent response to show command");
+//        logger.info("Sent response to show command");
+    }
+
+    public void getUpdate() throws IOException {
+       this.toClient.writeObject(last_update);
+    }
+
+    public void getUser() throws SQLException {
+        PreparedStatement strm = this.connection.prepareStatement("SELECT * FROM HRAMOVA_USERS WHERE id=?;");
+        strm.setLong(1, userid);
+        ResultSet rs = strm.executeQuery();
+
+        HashMap<String, String> a = new HashMap<String, String>();
+        try
+        {
+            rs.next();
+            a.put("id", String.valueOf(rs.getInt("id")));
+            a.put("login", rs.getString("login"));
+            toClient.writeObject(a);
+        } catch (Exception e){
+           e.printStackTrace();
+        }
+    }
+
+    public void getRowById(Set<Organization> collection, long id) throws IOException {
+
+        try{
+             toClient.writeObject(collection.stream().filter(o -> o.getId()==id).findFirst().get().toRow());
+             return;
+        } catch (IOException e) {
+            e.printStackTrace();
+            toClient.writeObject(new String []{});
+        }
+
+    }
+
+    public void getData(Set<Organization> collection) throws IOException{
+        ArrayList<String []> sendit = new ArrayList<String[]>();
+        collection.forEach(o -> sendit.add(o.toRow()));
+        this.toClient.writeObject(sendit);
+//        logger.info("Sent data to client");
     }
 
     public void info(Set<Organization> collection) throws IOException {
         this.toClient.writeObject(new Response(">Тип коллекции: " + collection.getClass() + '\n'+
                                                     ">Количество элементов: " +collection.size()+'\n'));
-        logger.info("Sent response to info command");
+//        logger.info("Sent response to info command");
     }
 
     public void add(Set<Organization> collection) throws IOException, ClassNotFoundException, SQLException {
@@ -95,9 +136,11 @@ public class ServerCommandHub {
             System.out.println(temp.getName() + " добавлена");
         }
 
-        logger.info("Added new element to collection");
+//        logger.info("Added new element to collection");
         toClient.writeObject(new Response(">Организация успешно добавлена в коллекцию"));
-        logger.info("Sent response to add command");
+//        logger.info("Sent response to add command");
+
+        last_update = LocalDateTime.now().toString();
     }
     public void update_by_id(Set<Organization> collection, long id) throws IOException, ClassNotFoundException, SQLException {
 
@@ -105,7 +148,7 @@ public class ServerCommandHub {
         if (stream.count()==1) {
             if (collection.stream().filter(o -> o.getId()==id).findFirst().get().getUSERID()!=this.userid) {
                 toClient.writeObject(new Response("vse ne ok"));
-                logger.info("Attempt to change element by id failed");
+//                logger.info("Attempt to change element by id failed");
                 return;
             }
             toClient.writeObject(new Response("vse ok"));
@@ -128,11 +171,13 @@ public class ServerCommandHub {
             connection.commit();
 
             toClient.writeObject(new Response(">Элемент по id "+ id + " успешно обновлен"));
-            logger.info("Element with id " + id + " updated successfully");
+//            logger.info("Element with id " + id + " updated successfully");
+
+            last_update = LocalDateTime.now().toString();
         }
         else  {
             toClient.writeObject(new Response("vse ne ok"));
-            logger.info("Attempt to change element by id failed");
+//            logger.info("Attempt to change element by id failed");
         }
 
     }
@@ -142,7 +187,7 @@ public class ServerCommandHub {
         if (stream.count()==1) {
             if (collection.stream().filter(o -> o.getId()==id).findFirst().get().getUSERID()!=this.userid) {
                 toClient.writeObject(new Response(">Нет доступа к элементу с таким id"));
-                logger.info("Attempt to remove element by id failed");
+//                logger.info("Attempt to remove element by id failed");
                 return;
             }
             collection.remove(collection.stream().filter(o -> o.getId()==id).findFirst().get());
@@ -153,11 +198,12 @@ public class ServerCommandHub {
             connection.commit();
 
             toClient.writeObject(new Response(">Элемент с заданным id успешно удален"));
-            logger.info("Element with id "+ + id + " removed successfully");
+//            logger.info("Element with id "+ + id + " removed successfully");
+            last_update = LocalDateTime.now().toString();
         }
         else {
             toClient.writeObject(new Response(">Элемента с таким id не существует"));
-            logger.info("Attempt to remove element by id failed");
+//            logger.info("Attempt to remove element by id failed");
         }
     }
 
@@ -171,12 +217,13 @@ public class ServerCommandHub {
             strm.execute(sql);
             connection.commit();
             toClient.writeObject(new Response(">Коллекция успешно очищена"));
-            logger.info("Collection was cleared");
+//            logger.info("Collection was cleared");
+            last_update = LocalDateTime.now().toString();
         }
         else
         {
             toClient.writeObject(new Response(">У вас нет элементов в этой коллекции"));
-            logger.info("Collection wasn't cleared");
+//            logger.info("Collection wasn't cleared");
         }
 
     }
@@ -219,12 +266,12 @@ public class ServerCommandHub {
                 collection.add(temporary);
                 System.out.println(temp.getName() + " добавлена");
             }
-
             toClient.writeObject(new Response(">Элемент минимален \n" + temp.getName() +" - успешно добавлен в коллекцию"));
-            logger.info("New element was successfully added");
+//            logger.info("New element was successfully added");
+            last_update = LocalDateTime.now().toString();
         } else {
             toClient.writeObject(new Response(">Элемент " + temp.getName() + " не является минимальным - данный метод не может добавить его в коллекцию"));
-            logger.info("Element wasn't added as it isn't minimal");
+//            logger.info("Element wasn't added as it isn't minimal");
         }
     }
 
@@ -240,11 +287,12 @@ public class ServerCommandHub {
                 connection.commit();
             }
             toClient.writeObject(new Response(">Объекты, бОльшие чем " + name + " ,удалены"));
-            logger.info("Organizations were deleted");
+//            logger.info("Organizations were deleted");
+            last_update = LocalDateTime.now().toString();
         }
         else{
             toClient.writeObject(new Response(">Не найдено организации с названием " + name));
-            logger.info("No organizations were deleted as there isn't any element with name " + name);
+//            logger.info("No organizations were deleted as there isn't any element with name " + name);
         }
 
     }
@@ -260,11 +308,12 @@ public class ServerCommandHub {
                 connection.commit();
             }
             toClient.writeObject(new Response(">Объекты, меньшие чем " + name + " ,удалены"));
-            logger.info("Organizations were deleted");
+//            logger.info("Organizations were deleted");
+            last_update = LocalDateTime.now().toString();
         }
         else{
             toClient.writeObject(new Response(">Не найдено организации с названием " + name));
-            logger.info("No organizations were deleted as there isn't any element with name " + name);
+//            logger.info("No organizations were deleted as there isn't any element with name " + name);
         }
 
     }
@@ -272,7 +321,7 @@ public class ServerCommandHub {
     public void count_greater_than_type(Set<Organization> collection, String type) throws IOException {
         System.out.println(OrganizationType.COMMERCIAL.toString().toLowerCase().compareTo(type));
         toClient.writeObject(new Response(">Найдено " + collection.stream().filter(o -> OrganizationType.valueOf(o.getType()).ordinal()> OrganizationType.valueOf(type.toUpperCase()).ordinal()).count() + " элементов"));
-        logger.info("Found " + collection.stream().filter(o -> OrganizationType.valueOf(o.getType()).ordinal()> OrganizationType.valueOf(type.toUpperCase()).ordinal()).count() + "elements");
+//        logger.info("Found " + collection.stream().filter(o -> OrganizationType.valueOf(o.getType()).ordinal()> OrganizationType.valueOf(type.toUpperCase()).ordinal()).count() + "elements");
 
     }
 
@@ -280,7 +329,7 @@ public class ServerCommandHub {
         Response resp = new Response("");
         collection.stream().forEachOrdered(o -> resp.addTextForward(o.toString()));
         toClient.writeObject(resp);
-        logger.info("Organizations were responded in descending order");
+//        logger.info("Organizations were responded in descending order");
     }
 
     public void print_field_ascending_official_address(Set<Organization> collection) throws IOException {
@@ -289,22 +338,25 @@ public class ServerCommandHub {
         Response resp = new Response("");
         addresses.stream().sorted().forEachOrdered(o->resp.addText(o));
         toClient.writeObject(resp);
-        logger.info("Addresses were printed in ascending order");
+//        logger.info("Addresses were printed in ascending order");
     }
 
     void help(String [] commandParts) throws IOException {
-        if (commandParts.length==1)
-        {
-            toClient.writeObject(new Response(">Список доступных команд:\n"  + CommandHelpList.keySet()));
-        }
-        else
-        {
-            if (CommandHelpList.containsKey(commandParts[1])) {
-                toClient.writeObject(new Response(CommandHelpList.get(commandParts[1])));
-            }
-            else
-                toClient.writeObject(new Response(">Такая команда не найдена"));
-        }
-        logger.info("A hand of help were given");
+//        if (commandParts.length==1)
+//        {
+//            toClient.writeObject(new Response(">Список доступных команд:\n"  + CommandHelpList.keySet()));
+//        }
+//        else
+//        {
+//            if (CommandHelpList.containsKey(commandParts[1])) {
+//                toClient.writeObject(new Response(CommandHelpList.get(commandParts[1])));
+//            }
+//            else
+//                toClient.writeObject(new Response(">Такая команда не найдена"));
+//        }
+        toClient.writeObject(new Response("Рады видеть Вас в нашем приложении! Перед Вами таблица" +
+                "с организациями. В верхней части окна находятся доступные команды. Для выхода из аккаунта" +
+                "нажмите log out. Для выхода и завершения работы нажмите крестик"));
+//        logger.info("A hand of help were given");
     }
 }

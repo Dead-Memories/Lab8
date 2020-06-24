@@ -42,6 +42,10 @@ public class Organization implements Comparable <Organization>{
         return result;
     }
 
+    public String[] toRow(){
+        return new String[]{this.getName(), String.valueOf(this.getId()), this.getCoordinates().toString(), this.getCreationDate(),
+                String.valueOf(this.getAnnualTurnover()), String.valueOf(this.getEmployeesCount()),  this.getType(), this.getOfficialAddress(), String.valueOf(this.getUSERID())};
+    }
 
     public long getId() {
         return id;

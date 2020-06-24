@@ -2,13 +2,10 @@ package ServerSide;
 
 import Organizations.*;
 import Communication.*;
-import org.apache.logging.log4j.Logger;
-
+//import org.apache.logging.log4j.Logger;
 import java.io.*;
-
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Scanner;
 import java.util.Set;
 
 public class ServerCommandReader {
@@ -16,18 +13,18 @@ public class ServerCommandReader {
     ObjectOutputStream toClient;
     ObjectInputStream fromClient;
     ServerCommandHub hub;
-    Logger logger;
+//    Logger logger;
     Connection connection;
     long userid;
 
-public ServerCommandReader(ObjectOutputStream toClient, ObjectInputStream fromClient, Logger logger, Connection connection, long userid) throws SQLException {
+
+public ServerCommandReader(ObjectOutputStream toClient, ObjectInputStream fromClient, Connection connection, long userid) throws SQLException {
     this.toClient = toClient;
     this.fromClient = fromClient;
-    this.hub = new ServerCommandHub(toClient, fromClient, logger, connection, userid);
-    this.logger = logger;
+    this.hub = new ServerCommandHub(toClient, fromClient, connection, userid);
+//    this.logger = logger;
     this.connection = connection;
     this.userid = userid;
-    System.out.println("USERID2:"+this.userid);
 }
 
 public void start_listening(Set<Organization> organizations) throws IOException, ClassNotFoundException, SQLException {
@@ -38,22 +35,34 @@ public void start_listening(Set<Organization> organizations) throws IOException,
 
                     command = ((Command) fromClient.readObject()).description;
 
-                    logger.info("Got command: " + command);
+//                    logger.info("Got command: " + command);
 
                     commandParts = command.split(" ", 3);
 
                     switch (commandParts[0]) {
+                        case "getUser":
+                            hub.getUser();
+                            break;
+                        case "getUpdate":
+                            hub.getUpdate();
+                            break;
                         case "help":
                             hub.help(commandParts);
                             break;
                         case "info":
                             hub.info(organizations);
                             break;
+                        case "getData":
+                            hub.getData(organizations);
+                            break;
                         case "show":
                             hub.show(organizations);
                             break;
                         case "add":
                             hub.add(organizations);
+                            break;
+                        case "getRowById":
+                            hub.getRowById(organizations, Long.parseLong(commandParts[1]));
                             break;
                         case "update_by_id":
                             try {
